@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import date, datetime
 
-st.set_page_config(page_title="Comparador MSCI World vs Fondos", layout="wide")
+st.set_page_config(page_title="Comparador MSCI World vs Fondos indexados", layout="wide")
 st.title("🌍 Comparador MSCI World vs Fondos indexados")
 
 st.sidebar.header("Configuración")
@@ -18,31 +18,43 @@ if "end_date" not in st.session_state:
 start_date = st.sidebar.date_input("Fecha de inicio", st.session_state.start_date, key="start_date")
 end_date = st.sidebar.date_input("Fecha de fin", st.session_state.end_date, key="end_date")
 
-# Benchmark candidates (fallback)
+# Benchmark MSCI World por proxy ETF, solo como referencia
+# Se mantiene para medir separación, pero NO se muestra como activo "invertible" comparado.
 benchmark_candidates = {
-    "iShares MSCI World ETF (URTH)": "URTH",
-    "iShares Core MSCI World UCITS ETF (IWDA.AS)": "IWDA.AS",
-    "iShares Core MSCI World UCITS ETF (SWDA.L)": "SWDA.L",
+    "MSCI World proxy - URTH": "URTH",
+    "MSCI World proxy - IWDA.AS": "IWDA.AS",
+    "MSCI World proxy - SWDA.L": "SWDA.L",
 }
 
-# Series a comparar
-# Nota: los fondos europeos muchas veces no descargan bien en Yahoo;
-# por eso aquí puedes mezclar fondos/ETFs según disponibilidad real.
-comparison_assets = {
-    "Vanguard FTSE Developed World UCITS ETF (VEVE.L)": "VEVE.L",
-    "iShares Core MSCI World UCITS ETF (IWDA.AS)": "IWDA.AS",
-    "iShares Core MSCI World UCITS ETF (SWDA.L)": "SWDA.L",
-    "Amundi MSCI World UCITS ETF (CW8.PA)": "CW8.PA",
+# Fondos solicitados
+# Ojo: en Yahoo Finance los fondos suelen usar sufijos de mercado.
+# Vanguard y Fidelity tienen referencias públicas localizadas.
+# El iShares puede requerir ajustar el sufijo si Yahoo no lo resuelve.
+funds = {
+    "iShares Developed World Index Fund | IE000ZYRH0Q7 | TER 0,06%": [
+        "IE000ZYRH0Q7",
+        "IE000ZYRH0Q7.IR",
+        "IE000ZYRH0Q7.SG",
+        "IE000ZYRH0Q7.F"
+    ],
+    "Fidelity MSCI World Index Fund | IE00BYX5NX33 | TER 0,12%": [
+        "IE00BYX5NX33.SG",
+        "IE00BYX5NX33"
+    ],
+    "Vanguard Global Stock Index Fund | IE00B03HD191 | TER 0,18%": [
+        "IE00B03HD191.IR",
+        "IE00B03HD191"
+    ],
 }
 
-st.sidebar.subheader("Activos a comparar")
-selected_assets = []
-for name in comparison_assets:
+st.sidebar.subheader("Fondos a comparar")
+selected_funds = []
+for name in funds:
     if st.sidebar.checkbox(name, value=True, key=f"chk_{name}"):
-        selected_assets.append(name)
+        selected_funds.append(name)
 
-if not selected_assets:
-    st.warning("Selecciona al menos un activo para comparar.")
+if not selected_funds:
+    st.warning("Selecciona al menos un fondo para comparar.")
     st.stop()
 
 
@@ -69,6 +81,14 @@ def download_series(ticker, start, end):
         return None
 
 
+def find_first_working_ticker(candidates, start, end):
+    for ticker in candidates:
+        s = download_series(ticker, start, end)
+        if s is not None and len(s) > 10:
+            return ticker, s
+    return None, None
+
+
 def find_benchmark(start, end):
     for name, ticker in benchmark_candidates.items():
         s = download_series(ticker, start, end)
@@ -78,7 +98,8 @@ def find_benchmark(start, end):
 
 
 def tracking_error(active_returns):
-    if active_returns.dropna().empty:
+    active_returns = active_returns.dropna()
+    if active_returns.empty:
         return float("nan")
     return active_returns.std() * (252 ** 0.5) * 100
 
@@ -88,7 +109,8 @@ def tracking_difference(norm_series, benchmark_series):
 
 
 def max_relative_gap(gap_series):
-    if gap_series.dropna().empty:
+    gap_series = gap_series.dropna()
+    if gap_series.empty:
         return float("nan")
     return gap_series.abs().max() * 100
 
@@ -101,35 +123,39 @@ def annualized_return(price_series):
     return ((price_series.iloc[-1] / price_series.iloc[0]) ** (1 / years) - 1) * 100
 
 
-# Descargar benchmark con fallback
+# Benchmark
 benchmark_name, benchmark_ticker, benchmark = find_benchmark(start_date, end_date)
 
 if benchmark is None:
-    st.error("No se pudo descargar ningún benchmark.")
-    st.info("Prueba con otro rango de fechas o revisa la conectividad con Yahoo Finance.")
+    st.error("No se pudo descargar ningún benchmark MSCI World.")
+    st.info("Prueba con otro rango de fechas o revisa si Yahoo Finance responde en este momento.")
     st.stop()
 
 st.sidebar.success(f"Benchmark cargado: {benchmark_name} [{benchmark_ticker}]")
 
-# Descargar activos
+# Descargar fondos
 series = {benchmark_name: benchmark}
-failed_assets = []
+resolved_tickers = {}
+failed_funds = []
 
-for name in selected_assets:
-    ticker = comparison_assets[name]
-    s = download_series(ticker, start_date, end_date)
-    if s is not None and len(s) > 10:
-        series[name] = s
-        st.sidebar.success(f"✅ {name}")
+for fund_name in selected_funds:
+    candidates = funds[fund_name]
+    resolved_ticker, s = find_first_working_ticker(candidates, start_date, end_date)
+
+    if s is not None:
+        series[fund_name] = s
+        resolved_tickers[fund_name] = resolved_ticker
+        st.sidebar.success(f"✅ {fund_name}")
+        st.sidebar.caption(f"Ticker usado: {resolved_ticker}")
     else:
-        failed_assets.append(name)
-        st.sidebar.warning(f"⚠️ Sin datos: {name}")
+        failed_funds.append(fund_name)
+        st.sidebar.warning(f"⚠️ Sin datos: {fund_name}")
 
 if len(series) < 2:
-    st.error("No hay suficientes series para comparar contra el benchmark.")
+    st.error("No hay suficientes fondos con datos para comparar contra el benchmark.")
     st.stop()
 
-# Unir y limpiar
+# Unir y alinear
 data = pd.concat(series, axis=1)
 data = data.dropna(how="all").sort_index()
 data = data.ffill().dropna()
@@ -138,10 +164,10 @@ if data.shape[0] < 10 or data.shape[1] < 2:
     st.error("Tras alinear fechas, no quedan suficientes datos comparables.")
     st.stop()
 
-# Base 100
+# Normalización base 100
 norm = data / data.iloc[0] * 100
 
-# Gap relativo frente al benchmark
+# Separación relativa frente al benchmark
 gap = norm.div(norm[benchmark_name], axis=0) - 1
 gap = gap.drop(columns=[benchmark_name], errors="ignore")
 
@@ -149,14 +175,23 @@ gap = gap.drop(columns=[benchmark_name], errors="ignore")
 rets = data.pct_change().dropna()
 active_rets = rets.drop(columns=[benchmark_name], errors="ignore").sub(rets[benchmark_name], axis=0)
 
-# Info superior
-st.subheader("Referencia usada")
+# Información superior
+st.subheader("Referencia utilizada")
 st.write(f"**Benchmark activo:** {benchmark_name} (`{benchmark_ticker}`)")
 
-if failed_assets:
-    st.caption("Activos sin datos en Yahoo Finance para este rango: " + ", ".join(failed_assets))
+if resolved_tickers:
+    st.subheader("Tickers resueltos")
+    resolved_df = pd.DataFrame(
+        [{"Fondo": k, "Ticker usado": v} for k, v in resolved_tickers.items()]
+    )
+    st.dataframe(resolved_df, use_container_width=True)
 
-# Gráfico 1: evolución base 100
+if failed_funds:
+    st.warning("Fondos sin datos en Yahoo Finance para este rango:")
+    for f in failed_funds:
+        st.write(f"- {f}")
+
+# Gráfico base 100
 st.subheader(f"Evolución base 100 ({start_date} a {end_date})")
 fig1 = go.Figure()
 
@@ -180,7 +215,7 @@ fig1.update_layout(
 )
 st.plotly_chart(fig1, use_container_width=True)
 
-# Gráfico 2: separación frente al benchmark
+# Gráfico de gap
 st.subheader("Separación frente al benchmark")
 fig2 = go.Figure()
 
@@ -204,13 +239,13 @@ fig2.update_layout(
 )
 st.plotly_chart(fig2, use_container_width=True)
 
-# Resumen
+# Resumen comparativo
 summary_data = {}
 for col in gap.columns:
     serie = data[col]
-    bench = data[benchmark_name]
 
     summary_data[col] = {
+        "Ticker usado": resolved_tickers.get(col, "—"),
         "Rentabilidad total fondo (%)": round((norm[col].iloc[-1] / 100 - 1) * 100, 2),
         "Rentabilidad total benchmark (%)": round((norm[benchmark_name].iloc[-1] / 100 - 1) * 100, 2),
         "Rentabilidad anualizada fondo (%)": round(annualized_return(serie), 2),
@@ -224,15 +259,14 @@ summary = pd.DataFrame(summary_data).T
 st.subheader("Resumen comparativo")
 st.dataframe(summary, use_container_width=True)
 
-# Tabla extra: últimos gaps
-st.subheader("Última desviación observada")
+# Última desviación
+st.subheader("Desviación actual frente al benchmark")
 last_gap = (gap.iloc[-1] * 100).sort_values()
-st.dataframe(
-    pd.DataFrame({"Gap actual vs benchmark (%)": last_gap.round(3)}),
-    use_container_width=True
-)
+last_gap_df = pd.DataFrame({"Gap actual vs benchmark (%)": last_gap.round(3)})
+st.dataframe(last_gap_df, use_container_width=True)
 
 st.caption(
-    "Nota: esta app usa Yahoo Finance vía yfinance. Para fondos de inversión indexados tradicionales, "
-    "muchas clases no están bien cubiertas; los ETF suelen funcionar mejor como proxy."
+    "Nota: la comparación se hace contra un proxy del MSCI World descargado desde Yahoo Finance. "
+    "En fondos de inversión, Yahoo no siempre publica todas las clases o mercados con el mismo sufijo; "
+    "por eso esta app intenta varias alternativas antes de dar error."
 )
