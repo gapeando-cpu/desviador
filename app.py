@@ -14,11 +14,41 @@ st.set_page_config(page_title="Comparador de carteras — Fondos", layout="wide"
 SAVE_FILE = "saved_portfolios.json"
 
 BASE_CATALOG = [
-    {"nombre": "iShares Developed World Index", "isin": "IE000ZYRH0Q7", "ter": 0.06, "yahoo": ["IE000ZYRH0Q7", "IE000ZYRH0Q7.IR", "IE000ZYRH0Q7.SG", "IE000ZYRH0Q7.F"], "stooq": []},
-    {"nombre": "Fidelity MSCI World Index Fund", "isin": "IE00BYX5NX33", "ter": 0.12, "yahoo": ["IE00BYX5NX33.SG", "IE00BYX5NX33"], "stooq": []},
-    {"nombre": "Vanguard Global Stock Index Fund", "isin": "IE00B03HD191", "ter": 0.18, "yahoo": ["IE00B03HD191.IR", "IE00B03HD191"], "stooq": []},
-    {"nombre": "MSCI World proxy ETF", "isin": "URTH", "ter": 0.24, "yahoo": ["URTH", "IWDA.AS", "SWDA.L"], "stooq": ["iwda.uk"]},
-    {"nombre": "Amundi MSCI World UCITS ETF", "isin": "LU1681043599", "ter": 0.12, "yahoo": ["CW8.PA"], "stooq": []},
+    {
+        "nombre": "iShares Developed World Index",
+        "isin": "IE000ZYRH0Q7",
+        "ter": 0.06,
+        "yahoo": ["IE000ZYRH0Q7", "IE000ZYRH0Q7.IR", "IE000ZYRH0Q7.SG", "IE000ZYRH0Q7.F"],
+        "stooq": [],
+    },
+    {
+        "nombre": "Fidelity MSCI World Index Fund",
+        "isin": "IE00BYX5NX33",
+        "ter": 0.12,
+        "yahoo": ["IE00BYX5NX33.SG", "IE00BYX5NX33"],
+        "stooq": [],
+    },
+    {
+        "nombre": "Vanguard Global Stock Index Fund",
+        "isin": "IE00B03HD191",
+        "ter": 0.18,
+        "yahoo": ["IE00B03HD191.IR", "IE00B03HD191"],
+        "stooq": [],
+    },
+    {
+        "nombre": "MSCI World proxy ETF",
+        "isin": "URTH",
+        "ter": 0.24,
+        "yahoo": ["URTH", "IWDA.AS", "SWDA.L"],
+        "stooq": ["iwda.uk"],
+    },
+    {
+        "nombre": "Amundi MSCI World UCITS ETF",
+        "isin": "LU1681043599",
+        "ter": 0.12,
+        "yahoo": ["CW8.PA"],
+        "stooq": [],
+    },
 ]
 
 PRESETS = {
@@ -198,7 +228,8 @@ if "search_terms" not in st.session_state:
 if "custom_catalog" not in st.session_state:
     st.session_state.custom_catalog = []
 
-st.markdown("""
+st.markdown(
+    """
 <style>
 .stApp {background: radial-gradient(circle at top right, rgba(58,93,171,.12), transparent 28%), linear-gradient(180deg, #05070d 0%, #070b14 35%, #050811 100%); color: #ecf2ff;}
 .block-container {max-width: 1380px; padding-top: 1rem; padding-bottom: 2rem;}
@@ -212,16 +243,23 @@ h1,h2,h3 {letter-spacing: -.02em;}
 div[data-testid="stMetric"] {background: linear-gradient(180deg,#101827,#0c1322); border:1px solid #1f2c45; border-radius: 14px; padding: 8px 10px;}
 div[data-testid="stDataFrame"] {border:1px solid #1f2c45; border-radius:14px; overflow:hidden;}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 st.title("Comparador de carteras — Fondos")
-st.caption("Versión fina: elige fondos, añade tickers propios, guarda carteras, exporta CSV y compara con datos reales manteniendo el estilo del comparador original.")
+st.caption(
+    "Versión fina: elige fondos, añade tickers propios, guarda carteras, exporta CSV y compara con datos reales manteniendo el estilo del comparador original."
+)
 
 catalog = get_catalog()
 meta_map = name_to_meta()
 all_names = [f["nombre"] for f in catalog]
 
-st.markdown("<div class='panel'><div class='smallcap'>Empieza rápido</div><div style='font-size:12px;color:#90a3c8'>Configura tus carteras A, B y C con fondos reales, pesos personalizados y benchmark opcional. Puedes añadir tickers tuyos y guardar tus combinaciones favoritas.</div></div>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='panel'><div class='smallcap'>Empieza rápido</div><div style='font-size:12px;color:#90a3c8'>Configura tus carteras A, B y C con fondos reales, pesos personalizados y benchmark opcional. Puedes añadir tickers tuyos y guardar tus combinaciones favoritas.</div></div>",
+    unsafe_allow_html=True,
+)
 
 with st.expander("Añadir fondo/ticker manual"):
     cc1, cc2, cc3, cc4 = st.columns([2, 1.2, 1, 1])
@@ -231,13 +269,15 @@ with st.expander("Añadir fondo/ticker manual"):
     custom_ter = cc4.number_input("TER (%)", min_value=0.0, max_value=5.0, value=0.12, step=0.01)
     if st.button("Añadir al catálogo"):
         if custom_name and custom_ticker:
-            st.session_state.custom_catalog.append({
-                "nombre": custom_name,
-                "isin": custom_isin if custom_isin else custom_ticker,
-                "ter": custom_ter,
-                "yahoo": [custom_ticker],
-                "stooq": []
-            })
+            st.session_state.custom_catalog.append(
+                {
+                    "nombre": custom_name,
+                    "isin": custom_isin if custom_isin else custom_ticker,
+                    "ter": custom_ter,
+                    "yahoo": [custom_ticker],
+                    "stooq": [],
+                }
+            )
             st.success(f"Añadido: {custom_name}")
             st.rerun()
         else:
@@ -263,9 +303,16 @@ for idx, label in enumerate(["A", "B", "C"]):
     with cols[idx]:
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         total_pct = sum(r["peso"] for r in st.session_state.portfolio_rows[label])
-        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><div class='port-{label.lower()}'>CARTERA {label}</div><div style='color:#2ce38a;font-weight:800'>{total_pct:.1f}%</div></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><div class='port-{label.lower()}'>CARTERA {label}</div><div style='color:#2ce38a;font-weight:800'>{total_pct:.1f}%</div></div>",
+            unsafe_allow_html=True,
+        )
         portfolio_name = st.text_input(f"Nombre cartera {label}", value=f"Cartera {label}", key=f"portfolio_name_{label}")
-        st.session_state.search_terms[label] = st.text_input(f"Buscar fondo para {label}", value=st.session_state.search_terms[label], key=f"search_{label}")
+        st.session_state.search_terms[label] = st.text_input(
+            f"Buscar fondo para {label}",
+            value=st.session_state.search_terms[label],
+            key=f"search_{label}",
+        )
         options = autocomplete_options(st.session_state.search_terms[label], catalog)
         add_col1, add_col2 = st.columns([3, 1])
         with add_col1:
@@ -278,12 +325,24 @@ for idx, label in enumerate(["A", "B", "C"]):
         remove_idx = None
         for i, row in enumerate(st.session_state.portfolio_rows[label]):
             r1, r2, r3 = st.columns([3.3, 1, 0.45])
-            current_options = all_names
-            safe_idx = current_options.index(row["nombre"]) if row["nombre"] in current_options else 0
-            row["nombre"] = r1.selectbox(f"Fondo {label}-{i+1}", current_options, index=safe_idx, key=f"row_name_{label}_{i}")
-            row["peso"] = r2.number_input(f"Peso {label}-{i+1}", min_value=0.0, max_value=100.0, value=float(row["peso"]), step=0.1, key=f"row_weight_{label}_{i}")
+            safe_idx = all_names.index(row["nombre"]) if row["nombre"] in all_names else 0
+            row["nombre"] = r1.selectbox(
+                f"Fondo {label}-{i+1}",
+                all_names,
+                index=safe_idx,
+                key=f"row_name_{label}_{i}",
+            )
+            row["peso"] = r2.number_input(
+                f"Peso {label}-{i+1}",
+                min_value=0.0,
+                max_value=100.0,
+                value=float(row["peso"]),
+                step=0.1,
+                key=f"row_weight_{label}_{i}",
+            )
             if r3.button("×", key=f"del_{label}_{i}"):
                 remove_idx = i
+
         if remove_idx is not None and len(st.session_state.portfolio_rows[label]) > 1:
             st.session_state.portfolio_rows[label].pop(remove_idx)
             st.rerun()
@@ -294,14 +353,17 @@ for idx, label in enumerate(["A", "B", "C"]):
             for row in st.session_state.portfolio_rows[label]:
                 row["peso"] = round(100 / n, 2)
             st.rerun()
+
         if ac2.button(f"Vaciar {label}"):
             first_name = st.session_state.portfolio_rows[label][0]["nombre"]
             st.session_state.portfolio_rows[label] = [{"nombre": first_name, "peso": 100.0}]
             st.rerun()
+
         dup_target = {"A": "B", "B": "C", "C": "A"}[label]
         if ac3.button(f"Duplicar {label} → {dup_target}"):
             st.session_state.portfolio_rows[dup_target] = [r.copy() for r in st.session_state.portfolio_rows[label]]
             st.rerun()
+
         if ac4.button(f"Guardar {label}"):
             st.session_state.saved_portfolios[portfolio_name] = [r.copy() for r in st.session_state.portfolio_rows[label]]
             save_saved_portfolios(st.session_state.saved_portfolios)
@@ -312,6 +374,7 @@ for idx, label in enumerate(["A", "B", "C"]):
             if load_name and st.button(f"Aplicar en {label}"):
                 st.session_state.portfolio_rows[label] = [r.copy() for r in st.session_state.saved_portfolios[load_name]]
                 st.rerun()
+
         st.markdown("</div>", unsafe_allow_html=True)
 
 b1, b2, b3, b4 = st.columns([1.4, 1.2, 1.2, 1.2])
@@ -333,17 +396,21 @@ if start_date >= end_date:
     st.error("La fecha de inicio debe ser anterior a la final.")
     st.stop()
 
+today = datetime.today().date()
 if selected_period == "3A":
-    today = datetime.today().date()
     start_date = max(start_date, date(today.year - 3, today.month, 1))
 elif selected_period == "5A":
-    today = datetime.today().date()
     start_date = max(start_date, date(today.year - 5, today.month, 1))
 elif selected_period == "10A":
-    today = datetime.today().date()
     start_date = max(start_date, date(today.year - 10, today.month, 1))
 
-benchmark_series, benchmark_ticker, benchmark_source, benchmark_tried = resolve_series(BENCHMARKS[benchmark_label]["yahoo"], BENCHMARKS[benchmark_label]["stooq"], start_date, end_date)
+benchmark_series, benchmark_ticker, benchmark_source, benchmark_tried = resolve_series(
+    BENCHMARKS[benchmark_label]["yahoo"],
+    BENCHMARKS[benchmark_label]["stooq"],
+    start_date,
+    end_date,
+)
+
 if benchmark_series is None:
     st.error("No se pudo descargar el benchmark seleccionado.")
     st.code("
@@ -360,7 +427,12 @@ for label in ["A", "B", "C"]:
         meta = meta_map[fund_name]
         s, ticker, source, tried = resolve_series(meta["yahoo"], meta["stooq"], start_date, end_date)
         if s is not None:
-            loaded_series[fund_name] = {"series": s, "ticker": ticker, "source": source, "meta": meta}
+            loaded_series[fund_name] = {
+                "series": s,
+                "ticker": ticker,
+                "source": source,
+                "meta": meta,
+            }
         else:
             load_log.append((fund_name, tried))
 
@@ -371,7 +443,9 @@ if not loaded_series:
 series_map = {benchmark_label: benchmark_series}
 for name, info in loaded_series.items():
     series_map[name] = info["series"]
+
 prices_all = pd.concat(series_map, axis=1).dropna(how="all").sort_index().ffill().dropna()
+
 if len(prices_all) < 30:
     st.error("No hay suficiente histórico común después de alinear fechas.")
     st.stop()
@@ -380,22 +454,26 @@ portfolio_series = {}
 portfolio_cost = {}
 portfolio_components = {}
 portfolio_invalid = {}
+
 for label in ["A", "B", "C"]:
     rows = st.session_state.portfolio_rows[label]
     valid = []
     weights = []
     invalid_names = []
+
     for row in rows:
         if row["nombre"] in prices_all.columns:
             valid.append(row["nombre"])
             weights.append(row["peso"])
         else:
             invalid_names.append(row["nombre"])
+
     portfolio_invalid[label] = invalid_names
+
     if valid and sum(weights) > 0:
         subset = prices_all[valid].dropna()
         portfolio_series[label] = calc_portfolio_value(subset, dict(zip(valid, weights)))
-        portfolio_cost[label] = sum(meta_map[n]["ter"] * w/100 for n, w in zip(valid, weights))
+        portfolio_cost[label] = sum(meta_map[n]["ter"] * w / 100 for n, w in zip(valid, weights))
         portfolio_components[label] = valid
 
 if not portfolio_series:
@@ -416,16 +494,19 @@ summary_rows = []
 for p in port_df.columns:
     td_final = (port_df[p].iloc[-1] / bench_base100.iloc[-1] - 1) * 100
     active = returns[p] - bench_rets
-    summary_rows.append({
-        "Cartera": p,
-        "Rent. total (%)": round((port_df[p].iloc[-1] / 100 - 1) * 100, 2),
-        "Rent. anualizada (%)": round(annualized_return(port_df[p]), 2),
-        "Tracking diff (%)": round(td_final, 2),
-        "Tracking error (%)": round(tracking_error(active), 2),
-        "Máx drawdown (%)": round(port_dd[p].min(), 2),
-        "TER blend (%)": round(portfolio_cost.get(p, np.nan), 3),
-        "Fondos válidos": len(portfolio_components.get(p, [])),
-    })
+    summary_rows.append(
+        {
+            "Cartera": p,
+            "Rent. total (%)": round((port_df[p].iloc[-1] / 100 - 1) * 100, 2),
+            "Rent. anualizada (%)": round(annualized_return(port_df[p]), 2),
+            "Tracking diff (%)": round(td_final, 2),
+            "Tracking error (%)": round(tracking_error(active), 2),
+            "Máx drawdown (%)": round(port_dd[p].min(), 2),
+            "TER blend (%)": round(portfolio_cost.get(p, np.nan), 3),
+            "Fondos válidos": len(portfolio_components.get(p, [])),
+        }
+    )
+
 summary = pd.DataFrame(summary_rows).set_index("Cartera")
 
 best_return = summary["Rent. total (%)"].idxmax()
@@ -433,9 +514,20 @@ lowest_dd = summary["Máx drawdown (%)"].idxmax()
 cheapest = summary["TER blend (%)"].idxmin()
 closest = summary["Tracking diff (%)"].abs().idxmin()
 cons_label = max(consistency, key=consistency.get) if consistency else None
-cons_text = f"; la más consistente, <b>Cartera {cons_label}</b> ({consistency[cons_label]:.0f}% de los tramos)" if cons_label else ""
+cons_text = (
+    f"; la más consistente, <b>Cartera {cons_label}</b> ({consistency[cons_label]:.0f}% de los tramos)"
+    if cons_label
+    else ""
+)
 
-st.markdown(f"<div class='verdict'><b style='color:#ffbe4d'>Veredicto.</b> Por rentabilidad manda <b>Cartera {best_return}</b>; la que menos cae es <b>Cartera {lowest_dd}</b>; la más barata, <b>Cartera {cheapest}</b>; la más pegada al benchmark, <b>Cartera {closest}</b>{cons_text}.</div>", unsafe_allow_html=True)
+st.markdown(
+    f"<div class='verdict'><b style='color:#ffbe4d'>Veredicto.</b> "
+    f"Por rentabilidad manda <b>Cartera {best_return}</b>; "
+    f"la que menos cae es <b>Cartera {lowest_dd}</b>; "
+    f"la más barata, <b>Cartera {cheapest}</b>; "
+    f"la más pegada al benchmark, <b>Cartera {closest}</b>{cons_text}.</div>",
+    unsafe_allow_html=True,
+)
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Benchmark usado", benchmark_ticker)
@@ -455,61 +547,158 @@ for p in ["A", "B", "C"]:
         st.caption(f"Cartera {p}: sin datos para " + ", ".join(portfolio_invalid[p]))
 
 left, right = st.columns([1.05, 2.2])
+
 with left:
     loaded_info = []
     for name, info in loaded_series.items():
-        loaded_info.append({"Fondo": name, "ISIN": info["meta"]["isin"], "TER (%)": info["meta"]["ter"], "Ticker": info["ticker"], "Fuente": info["source"]})
+        loaded_info.append(
+            {
+                "Fondo": name,
+                "ISIN": info["meta"]["isin"],
+                "TER (%)": info["meta"]["ter"],
+                "Ticker": info["ticker"],
+                "Fuente": info["source"],
+            }
+        )
     st.dataframe(pd.DataFrame(loaded_info), use_container_width=True)
 
 with right:
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=port_df.index, y=bench_base100, mode='lines', name='Benchmark', line=dict(color='#98aed2', width=2.2)))
+    fig.add_trace(
+        go.Scatter(
+            x=port_df.index,
+            y=bench_base100,
+            mode="lines",
+            name="Benchmark",
+            line=dict(color="#98aed2", width=2.2),
+        )
+    )
     for p in port_df.columns:
-        fig.add_trace(go.Scatter(x=port_df.index, y=port_df[p], mode='lines', name=f'Cartera {p}', line=dict(color=PORT_COLORS[p], width=2.9 if p == best_return else 2.2), fill='tozeroy' if p == best_return else None, fillcolor='rgba(255,255,255,0.02)'))
-    fig.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(10,16,32,0.55)', height=420, margin=dict(l=10,r=10,t=20,b=10), legend=dict(orientation='h', y=1.08), yaxis_title='Base 100')
-    fig.update_xaxes(gridcolor='rgba(120,155,220,.08)')
-    fig.update_yaxes(gridcolor='rgba(120,155,220,.08)')
-    st.subheader('Crecimiento de 100€')
+        fig.add_trace(
+            go.Scatter(
+                x=port_df.index,
+                y=port_df[p],
+                mode="lines",
+                name=f"Cartera {p}",
+                line=dict(color=PORT_COLORS[p], width=2.9 if p == best_return else 2.2),
+                fill="tozeroy" if p == best_return else None,
+                fillcolor="rgba(255,255,255,0.02)",
+            )
+        )
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(10,16,32,0.55)",
+        height=420,
+        margin=dict(l=10, r=10, t=20, b=10),
+        legend=dict(orientation="h", y=1.08),
+        yaxis_title="Base 100",
+    )
+    fig.update_xaxes(gridcolor="rgba(120,155,220,.08)")
+    fig.update_yaxes(gridcolor="rgba(120,155,220,.08)")
+    st.subheader("Crecimiento de 100€")
     st.plotly_chart(fig, use_container_width=True)
 
 if consistency:
-    st.subheader('Consistencia')
-    st.caption('Ventanas móviles de 3 años: porcentaje de tramos solapados en los que cada cartera fue la mejor.')
-    for p in ['A', 'B', 'C']:
+    st.subheader("Consistencia")
+    st.caption("Ventanas móviles de 3 años: porcentaje de tramos solapados en los que cada cartera fue la mejor.")
+    for p in ["A", "B", "C"]:
         if p in consistency:
-            st.progress(min(max(consistency[p] / 100, 0), 1), text=f'Cartera {p}: {consistency[p]:.0f}%')
+            st.progress(min(max(consistency[p] / 100, 0), 1), text=f"Cartera {p}: {consistency[p]:.0f}%")
 
 cA, cB = st.columns(2)
+
 with cA:
     fig_gap = go.Figure()
     for p in port_gap.columns:
-        fig_gap.add_trace(go.Scatter(x=port_gap.index, y=port_gap[p]*100, mode='lines', name=f'Cartera {p}', line=dict(color=PORT_COLORS[p], width=2.2)))
-    fig_gap.add_hline(y=0, line_dash='dash', line_color='rgba(220,230,255,.4)')
-    fig_gap.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(10,16,32,0.55)', height=320, margin=dict(l=10,r=10,t=20,b=10), legend=dict(orientation='h', y=1.08), yaxis_title='Gap vs benchmark (%)')
-    fig_gap.update_xaxes(gridcolor='rgba(120,155,220,.08)')
-    fig_gap.update_yaxes(gridcolor='rgba(120,155,220,.08)')
-    st.subheader('Separación frente al benchmark')
+        fig_gap.add_trace(
+            go.Scatter(
+                x=port_gap.index,
+                y=port_gap[p] * 100,
+                mode="lines",
+                name=f"Cartera {p}",
+                line=dict(color=PORT_COLORS[p], width=2.2),
+            )
+        )
+    fig_gap.add_hline(y=0, line_dash="dash", line_color="rgba(220,230,255,.4)")
+    fig_gap.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(10,16,32,0.55)",
+        height=320,
+        margin=dict(l=10, r=10, t=20, b=10),
+        legend=dict(orientation="h", y=1.08),
+        yaxis_title="Gap vs benchmark (%)",
+    )
+    fig_gap.update_xaxes(gridcolor="rgba(120,155,220,.08)")
+    fig_gap.update_yaxes(gridcolor="rgba(120,155,220,.08)")
+    st.subheader("Separación frente al benchmark")
     st.plotly_chart(fig_gap, use_container_width=True)
+
 with cB:
     fig_dd = go.Figure()
     for p in port_dd.columns:
-        fig_dd.add_trace(go.Scatter(x=port_dd.index, y=port_dd[p], mode='lines', name=f'Cartera {p}', line=dict(color=PORT_COLORS[p], width=2.2), fill='tozeroy', fillcolor='rgba(180,190,255,.03)'))
-    fig_dd.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(10,16,32,0.55)', height=320, margin=dict(l=10,r=10,t=20,b=10), legend=dict(orientation='h', y=1.08), yaxis_title='Drawdown (%)')
-    fig_dd.update_xaxes(gridcolor='rgba(120,155,220,.08)')
-    fig_dd.update_yaxes(gridcolor='rgba(120,155,220,.08)')
-    st.subheader('Caídas desde máximos')
+        fig_dd.add_trace(
+            go.Scatter(
+                x=port_dd.index,
+                y=port_dd[p],
+                mode="lines",
+                name=f"Cartera {p}",
+                line=dict(color=PORT_COLORS[p], width=2.2),
+                fill="tozeroy",
+                fillcolor="rgba(180,190,255,.03)",
+            )
+        )
+    fig_dd.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(10,16,32,0.55)",
+        height=320,
+        margin=dict(l=10, r=10, t=20, b=10),
+        legend=dict(orientation="h", y=1.08),
+        yaxis_title="Drawdown (%)",
+    )
+    fig_dd.update_xaxes(gridcolor="rgba(120,155,220,.08)")
+    fig_dd.update_yaxes(gridcolor="rgba(120,155,220,.08)")
+    st.subheader("Caídas desde máximos")
     st.plotly_chart(fig_dd, use_container_width=True)
 
 fig_bar = go.Figure()
 for p in summary.index:
-    fig_bar.add_trace(go.Bar(name=f'Cartera {p}', x=['Rent. total', 'Rent. anualizada', 'TER blend'], y=[summary.loc[p, 'Rent. total (%)'], summary.loc[p, 'Rent. anualizada (%)'], summary.loc[p, 'TER blend (%)']], marker_color=PORT_COLORS[p]))
-fig_bar.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(10,16,32,0.55)', height=320, margin=dict(l=10,r=10,t=20,b=10), barmode='group', legend=dict(orientation='h', y=1.08), yaxis_title='%')
-fig_bar.update_xaxes(gridcolor='rgba(120,155,220,.08)')
-fig_bar.update_yaxes(gridcolor='rgba(120,155,220,.08)')
-st.subheader('Resumen comparado')
+    fig_bar.add_trace(
+        go.Bar(
+            name=f"Cartera {p}",
+            x=["Rent. total", "Rent. anualizada", "TER blend"],
+            y=[
+                summary.loc[p, "Rent. total (%)"],
+                summary.loc[p, "Rent. anualizada (%)"],
+                summary.loc[p, "TER blend (%)"],
+            ],
+            marker_color=PORT_COLORS[p],
+        )
+    )
+
+fig_bar.update_layout(
+    template="plotly_dark",
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(10,16,32,0.55)",
+    height=320,
+    margin=dict(l=10, r=10, t=20, b=10),
+    barmode="group",
+    legend=dict(orientation="h", y=1.08),
+    yaxis_title="%",
+)
+fig_bar.update_xaxes(gridcolor="rgba(120,155,220,.08)")
+fig_bar.update_yaxes(gridcolor="rgba(120,155,220,.08)")
+st.subheader("Resumen comparado")
 st.plotly_chart(fig_bar, use_container_width=True)
 
 st.dataframe(summary, use_container_width=True)
 
-csv_summary = summary.reset_index().to_csv(index=False).encode('utf-8')
-st.download_button('Descargar resumen CSV', csv_summary, file_name='comparador_carteras_resumen.csv', mime='text/csv')
+csv_summary = summary.reset_index().to_csv(index=False).encode("utf-8")
+st.download_button(
+    "Descargar resumen CSV",
+    csv_summary,
+    file_name="comparador_carteras_resumen.csv",
+    mime="text/csv",
+)
